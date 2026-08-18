@@ -1,0 +1,70 @@
+name: Release installer
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # The manifest inside the installer must point at the published site, not localhost.
+      - name: Build the pane and the production manifest
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: npm run build:dist -- "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: Compile the installer
+        run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\tank.iss'
+
+      # Signing only runs when a certificate is configured, so forks and early
+      # releases still build. Unsigned means Windows shows a SmartScreen warning.
+      - name: Sign the installer
+        if: env.CERT_PFX != ''
+        env:
+          CERT_PFX: ${{ secrets.CERT_PFX }}
+          CERT_PASSWORD: ${{ secrets.CERT_PASSWORD }}
+        run: |
+          [IO.File]::WriteAllBytes("cert.pfx", [Convert]::FromBase64String($env:CERT_PFX))
+          & "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe" sign `
+            /f cert.pfx /p $env:CERT_PASSWORD /tr http://timestamp.digicert.com /td sha256 /fd sha256 `
+            release\tANk-Setup.exe
+          Remove-Item cert.pfx
+
+      # GitHub signs the binary's provenance, so anyone can verify it came from this
+      # repo and this workflow: gh attestation verify tANk-Setup.exe --repo <owner>/<repo>
+      - name: Attest the installer
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: release/tANk-Setup.exe
+
+      - name: Publish the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/tANk-Setup.exe
+            dist/manifest.xml
+          body: |
+            Close Excel, Word and PowerPoint, then run `tANk-Setup.exe`. No administrator rights needed.
+
+            Open Excel and click **tANk** on the Home tab. First time, open Settings in the pane and paste a free API key.
+
+            Setup and troubleshooting: [INSTALL.md](https://github.com/${{ github.repository }}/blob/main/INSTALL.md)
