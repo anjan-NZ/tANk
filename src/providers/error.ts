@@ -64,6 +64,24 @@ export function classify(status: number, body: string): FailureKind {
   return "other";
 }
 
+/** These come back as durations, not plain seconds: "60", "980ms", "2m59.56s". */
+function durationSecs(v: string | null): number | undefined {
+  if (!v) return undefined;
+  const parts = [...v.matchAll(/([\d.]+)\s*(ms|s|m|h)?/g)];
+  let total = 0;
+  let found = false;
+  for (const p of parts) {
+    const f = parseFloat(p[1]);
+    if (!Number.isFinite(f)) continue;
+    found = true;
+    total += p[2] === "h" ? f * 3600 : p[2] === "m" ? f * 60 : p[2] === "ms" ? f / 1000 : f;
+  }
+  if (found) return total;
+  // Retry-After is allowed to be an HTTP date instead of a count of seconds.
+  const at = Date.parse(v);
+  return Number.isFinite(at) ? Math.max(0, (at - Date.now()) / 1000) : undefined;
+}
+
 /** Groq and friends report what is left in the current window on every response. */
 export function rateFrom(headers: Headers): {
   remainingRequests?: number;
@@ -75,34 +93,21 @@ export function rateFrom(headers: Headers): {
     const f = parseFloat(v);
     return Number.isFinite(f) ? f : undefined;
   };
-  const secs = (v: string | null) => {
-    if (!v) return undefined;
-    const m = v.match(/([\d.]+)\s*(ms|s|m)?/);
-    if (!m) return undefined;
-    const f = parseFloat(m[1]);
-    if (m[2] === "m") return f * 60;
-    if (m[2] === "ms") return f / 1000;
-    return f;
-  };
   return {
     remainingRequests: n(headers.get("x-ratelimit-remaining-requests")),
     remainingTokens: n(headers.get("x-ratelimit-remaining-tokens")),
     resetSeconds:
-      secs(headers.get("x-ratelimit-reset-tokens")) ?? secs(headers.get("x-ratelimit-reset-requests")),
+      durationSecs(headers.get("x-ratelimit-reset-tokens")) ??
+      durationSecs(headers.get("x-ratelimit-reset-requests")),
   };
 }
 
 /** Providers report the wait in a header, or inside the message ("try again in 42.1s"). */
 export function retryAfterFrom(headers: Headers, body: string): number | null {
-  const h = headers.get("retry-after") ?? headers.get("x-ratelimit-reset-requests");
-  if (h) {
-    const n = parseFloat(h);
-    if (Number.isFinite(n)) return Math.ceil(n);
-  }
-  const m = body.match(/try again in ([\d.]+)\s*(m|s)/i);
-  if (m) {
-    const n = parseFloat(m[1]);
-    return Math.ceil(m[2].toLowerCase() === "m" ? n * 60 : n);
-  }
-  return null;
+  const h = durationSecs(headers.get("retry-after") ?? headers.get("x-ratelimit-reset-requests"));
+  if (h !== undefined) return Math.ceil(h);
+
+  const m = body.match(/try again in ([\d.]+\s*(?:h|m|s|ms)(?:[\d.]+\s*(?:m|s|ms))*)/i);
+  const fromBody = durationSecs(m?.[1] ?? null);
+  return fromBody === undefined ? null : Math.ceil(fromBody);
 }

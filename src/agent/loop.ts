@@ -23,6 +23,7 @@ import { flattenForPromptMode, parsePromptedCall, toolCatalogPrompt } from "./pr
 const MAX_STEPS = 12;
 const OLD_TOOL_RESULT_CHARS = 600;
 const MAX_SWITCHES = 4;
+const MAX_WAITS = 3;
 
 export interface TurnDeps {
   settings: Settings;
@@ -71,6 +72,7 @@ export async function runTurn(history: Msg[], deps: TurnDeps): Promise<void> {
   const convo: Msg[] = [...history];
   let active = { provider: settings.provider, model: settings.model };
   let switches = 0;
+  let waits = 0;
   const promptModels = new Set(settings.promptToolModels);
   const isPromptMode = () => promptModels.has(active.provider + "|" + active.model);
 
@@ -175,8 +177,9 @@ export async function runTurn(history: Msg[], deps: TurnDeps): Promise<void> {
             });
             continue;
           }
-          // Nowhere to go, but the window reopens soon: just wait it out.
-          if (err.retryAfterSec && err.retryAfterSec <= 30) {
+          // Nowhere to go, but the window reopens soon: wait it out, a few times at most.
+          if (err.retryAfterSec && err.retryAfterSec <= 30 && waits < MAX_WAITS) {
+            waits++;
             deps.setStatus("every model is busy, waiting " + err.retryAfterSec + "s");
             await sleep(err.retryAfterSec * 1000 + 500, deps.signal);
             continue;

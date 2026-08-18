@@ -40,8 +40,9 @@ export function noteSuccess(id: string, rate?: RateInfo, tokens?: number): void 
   h.cooldownUntil = 0;
   h.calls++;
   if (tokens) h.tokens += tokens;
-  if (rate?.remainingRequests !== undefined) h.remainingRequests = rate.remainingRequests;
-  if (rate?.remainingTokens !== undefined) h.remainingTokens = rate.remainingTokens;
+  // A success replaces the picture, including zeros left by an earlier 429.
+  h.remainingRequests = rate?.remainingRequests;
+  h.remainingTokens = rate?.remainingTokens;
 }
 
 export function noteRateLimit(id: string, resetSeconds: number | null): void {

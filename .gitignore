@@ -26,6 +26,3 @@ dist-ssr
 # private working notes, never published
 notes/
 release/
-
-# local agent instructions, not part of the product
-CLAUDE.md

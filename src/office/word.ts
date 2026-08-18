@@ -160,6 +160,8 @@ export async function insertList(args: { items: string[]; ordered?: boolean }): 
     const list = first.startNewList();
     if (args.ordered) list.setLevelNumbering(0, Word.ListNumbering.arabic);
     else list.setLevelBullet(0, Word.ListBullet.solid);
+    // attachToList reads list.id, which throws unless it is loaded
+    list.load("id");
     await ctx.sync();
 
     let previous = first;

@@ -1,4 +1,18 @@
 /** The rest of the everyday Excel jobs: structure, tables, filters, cleanup. */
+import { snapshot } from "./undo";
+
+/** Office.js writes bypass Excel's undo, so a range is recorded before it is overwritten. */
+async function keepCopy(
+  ctx: Excel.RequestContext,
+  ws: Excel.Worksheet,
+  range: Excel.Range,
+  label: string
+): Promise<void> {
+  range.load("address");
+  await ctx.sync();
+  const addr = range.address.includes("!") ? range.address.split("!")[1] : range.address;
+  await snapshot(ctx, ws.name, addr, label + " " + ws.name + "!" + addr);
+}
 
 function sheetOf(ctx: Excel.RequestContext, name?: string): Excel.Worksheet {
   return name ? ctx.workbook.worksheets.getItem(name) : ctx.workbook.worksheets.getActiveWorksheet();
@@ -17,7 +31,9 @@ export async function clearRange(args: {
       formats: Excel.ClearApplyTo.formats,
       all: Excel.ClearApplyTo.all,
     };
-    ws.getRange(args.address).clear(map[args.what ?? "contents"]);
+    const target = ws.getRange(args.address);
+    await keepCopy(ctx, ws, target, "clear");
+    target.clear(map[args.what ?? "contents"]);
     await ctx.sync();
     return "cleared " + (args.what ?? "contents") + " in " + ws.name + "!" + args.address;
   });
@@ -63,6 +79,7 @@ export async function mergeCells(args: {
     const ws = sheetOf(ctx, args.sheet);
     ws.load("name");
     const range = ws.getRange(args.address);
+    await keepCopy(ctx, ws, range, args.unmerge ? "unmerge" : "merge");
     if (args.unmerge) range.unmerge();
     else range.merge(args.across ?? false);
     await ctx.sync();
@@ -187,7 +204,19 @@ export async function copyRange(args: {
       values: Excel.RangeCopyType.values,
       formats: Excel.RangeCopyType.formats,
     };
-    toWs.getRange(args.to).copyFrom(fromWs.getRange(args.from), map[args.what ?? "all"]);
+    // copyFrom writes the whole source block however small the target address is.
+    const source = fromWs.getRange(args.from);
+    source.load(["rowCount", "columnCount"]);
+    await ctx.sync();
+
+    const destination = toWs.getRange(args.to);
+    await keepCopy(
+      ctx,
+      toWs,
+      destination.getAbsoluteResizedRange(source.rowCount, source.columnCount),
+      "copy into"
+    );
+    destination.copyFrom(source, map[args.what ?? "all"]);
     await ctx.sync();
     return "copied " + fromWs.name + "!" + args.from + " to " + toWs.name + "!" + args.to;
   });
@@ -256,6 +285,7 @@ export async function replaceInRange(args: {
     const ws = sheetOf(ctx, args.sheet);
     ws.load("name");
     const range = args.address ? ws.getRange(args.address) : ws.getUsedRange(true);
+    await keepCopy(ctx, ws, range, "replace in");
     const count = range.replaceAll(args.find, args.replace, {
       completeMatch: false,
       matchCase: args.matchCase ?? false,

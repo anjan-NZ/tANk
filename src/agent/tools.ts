@@ -318,13 +318,22 @@ function describeChange(name: string, args: Args): string {
     case "clear_range":
       return "Clear " + (args.what ?? "contents") + " in " + where + "?";
     case "delete_rows_columns":
-      return "Delete " + args.what + " " + where + "?";
+      return "Delete " + args.what + " " + where + "? Everything below shifts up, so undo cannot put it back.";
     case "remove_duplicates":
-      return "Remove duplicate rows from " + where + "?";
+      return "Remove duplicate rows from " + where + "? Undo cannot put the rows back.";
     case "copy_range":
       return "Copy " + args.from + " over " + (args.toSheet ? args.toSheet + "!" : "") + args.to + "?";
     case "replace_in_range":
       return 'Replace "' + args.find + '" with "' + args.replace + '" in ' + (where || "this sheet") + "?";
+    case "manage_sheet":
+      return args.action === "delete"
+        ? "Delete the sheet " + args.sheet + " and everything on it? Undo does not cover this one."
+        : "Rename the sheet " + args.sheet + " to " + args.newName + "?";
+    case "audit_check":
+      return (
+        "Write the " + args.action + " result onto the sheet " + args.writeToSheet +
+        "? Anything already there from A1 down is replaced, and undo does not cover it."
+      );
     case "merge_cells":
       return (args.unmerge ? "Unmerge " : "Merge ") + where + "?";
     case "replace_selection":
@@ -407,6 +416,38 @@ const NEEDS_PERMISSION = new Set([
   ...SCRIPT_WRITING_TOOLS,
 ]);
 
+/** Confirmed whatever editMode says: Auto waives overwrites, not running model-written code. */
+const ALWAYS_CONFIRM = new Set(["run_office_script"]);
+
+function needsPermission(name: string, args: Args): boolean {
+  if (ALWAYS_CONFIRM.has(name)) return true;
+  // audit_check only writes when asked to
+  if (name === "audit_check") return typeof args.writeToSheet === "string" && !!args.writeToSheet;
+  if (name === "manage_sheet") return args.action === "delete" || args.action === "rename";
+  return NEEDS_PERMISSION.has(name);
+}
+
+/** Returns a refusal string when the user declines, or null to go ahead. */
+async function gate(name: string, args: Args, deps: ToolDeps): Promise<string | null> {
+  if (!ALWAYS_CONFIRM.has(name) && deps.editMode !== "ask") return null;
+  if (!needsPermission(name, args)) return null;
+  const ok = await deps.confirmEdit(describeChange(name, args));
+  return ok ? null : "The user said no, so nothing was changed.";
+}
+
+/** These fetch a URL or call out of Excel, so a written formula never carries one. */
+const UNSAFE_FUNCTIONS = /\b(WEBSERVICE|RTD|CALL|REGISTER(?:\.ID)?|EXEC|IMAGE)\s*\(/i;
+
+export function unsafeFormula(v: unknown): string | null {
+  const m = String(v ?? "").match(UNSAFE_FUNCTIONS);
+  if (!m) return null;
+  return (
+    "Refused: " +
+    m[1].toUpperCase() +
+    "() can send the contents of this file out over the network, so tANk will not write it."
+  );
+}
+
 export async function execTool(name: string, args: Args, deps: ToolDeps): Promise<string> {
   const host = detectHost();
 
@@ -414,10 +455,8 @@ export async function execTool(name: string, args: Args, deps: ToolDeps): Promis
     if (name === "ask_user")
       return deps.ask(String(args.question ?? ""), Array.isArray(args.options) ? args.options : []);
 
-    if (deps.editMode === "ask" && NEEDS_PERMISSION.has(name)) {
-      const ok = await deps.confirmEdit(describeChange(name, args));
-      if (!ok) return "The user said no, so nothing was changed.";
-    }
+    const refused = await gate(name, args, deps);
+    if (refused) return refused;
 
     const scripted = await execScriptTool(name, args);
     if (scripted !== null) return scripted;
@@ -427,17 +466,15 @@ export async function execTool(name: string, args: Args, deps: ToolDeps): Promis
     return result ?? "That tool is not available in " + host + ".";
   }
 
-  if (NEEDS_PERMISSION.has(name)) {
-    if (deps.editMode === "ask") {
-      const ok = await deps.confirmEdit(describeChange(name, args));
-      if (!ok) return "The user said no, so nothing was changed.";
-    }
-    const handled = (await execExcelExtraTool(name, args)) ?? (await execScriptTool(name, args));
-    if (handled !== null && handled !== undefined) return handled;
-  } else {
-    const handled = (await execExcelExtraTool(name, args)) ?? (await execScriptTool(name, args));
-    if (handled !== null && handled !== undefined) return handled;
-  }
+  const badFormula =
+    unsafeFormula(args.formula) ?? (name === "replace_in_range" ? unsafeFormula(args.replace) : null);
+  if (badFormula) return badFormula;
+
+  const refused = await gate(name, args, deps);
+  if (refused) return refused;
+
+  const handled = (await execExcelExtraTool(name, args)) ?? (await execScriptTool(name, args));
+  if (handled !== null && handled !== undefined) return handled;
 
   switch (name) {
     case "ask_user":
@@ -485,6 +522,12 @@ export async function execTool(name: string, args: Args, deps: ToolDeps): Promis
 
     case "write_range": {
       const values = (args.values as unknown[][]).map((row) => row.map(coerceCell));
+      for (const row of values) {
+        for (const cell of row) {
+          const bad = unsafeFormula(cell);
+          if (bad) return bad;
+        }
+      }
       const rows = values.length;
       const cols = rows ? Math.max(...values.map((r) => r.length)) : 0;
       const blocked = await guardOverwrite(deps, args.sheet, args.address, rows, cols, "Write");

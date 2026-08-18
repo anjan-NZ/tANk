@@ -16,6 +16,8 @@ export interface Msg {
   toolName?: string;
   /** UI-only: transient status line under an assistant turn */
   status?: string;
+  /** shown in the transcript, never replayed to the model */
+  uiOnly?: boolean;
   error?: boolean;
 }
 

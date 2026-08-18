@@ -230,4 +230,5 @@ export const EXCEL_EXTRA_WRITING_TOOLS = new Set([
   "copy_range",
   "replace_in_range",
   "merge_cells",
+  "manage_sheet",
 ]);

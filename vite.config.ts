@@ -27,6 +27,7 @@ export default defineConfig(async () => {
     plugins: [react()],
     base: "./",
     server: { port: 3000, strictPort: true, https },
-    build: { outDir: "dist", sourcemap: true },
+    // No source map in the published build, it would serve the readable source.
+    build: { outDir: "dist", sourcemap: false },
   };
 });

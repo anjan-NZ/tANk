@@ -3,6 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- connect-src mirrors <AppDomains> in the manifest. unsafe-eval is what run_office_script needs. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+               script-src 'self' 'unsafe-eval' 'unsafe-inline' https://appsforoffice.microsoft.com https://*.officeapps.live.com;
+               style-src 'self' 'unsafe-inline';
+               img-src 'self' data: blob:;
+               font-src 'self' data:;
+               connect-src 'self'
+                 https://api.groq.com
+                 https://generativelanguage.googleapis.com
+                 https://openrouter.ai
+                 https://api.cerebras.ai
+                 https://api.mistral.ai
+                 https://api.sambanova.ai
+                 https://integrate.api.nvidia.com
+                 https://models.github.ai
+                 https://open.bigmodel.cn
+                 https://api.github.com
+                 https://appsforoffice.microsoft.com
+                 https://*.officeapps.live.com;
+               object-src 'none';
+               base-uri 'none';
+               form-action 'none';"
+    />
     <title>tANk</title>
     <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
   </head>

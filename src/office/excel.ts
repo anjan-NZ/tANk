@@ -231,7 +231,8 @@ export async function formatRange(args: FormatArgs): Promise<string> {
     await ctx.sync();
 
     const addr = stripSheet(target.address);
-    await snapshot(ctx, ws.name, addr, "format " + ws.name + "!" + addr);
+    // A snapshot holds formulas and number formats only, so nothing else here is revertible.
+    if (args.numberFormat) await snapshot(ctx, ws.name, addr, "format " + ws.name + "!" + addr);
 
     const fmt = target.format;
     if (args.bold !== undefined) fmt.font.bold = args.bold;
@@ -346,6 +347,12 @@ export async function sortRange(args: {
     const ws = sheetOf(ctx, args.sheet);
     ws.load("name");
     const target = ws.getRange(args.address);
+    target.load("address");
+    await ctx.sync();
+
+    const addr = stripSheet(target.address);
+    await snapshot(ctx, ws.name, addr, "sort " + ws.name + "!" + addr);
+
     target.sort.apply(
       [{ key: args.columnIndex, ascending: args.ascending ?? true }],
       false,

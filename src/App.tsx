@@ -97,18 +97,27 @@ export default function App() {
   useEffect(() => {
     if (!inExcel()) return;
     refreshSelection();
-    let handler: any;
+    let handler: any = null;
+    let dropped = false;
+    const remove = (h: any) =>
+      Excel.run(h.context, async (ctx) => {
+        h.remove();
+        await ctx.sync();
+      }).catch(() => undefined);
+
     Excel.run(async (ctx) => {
-      handler = ctx.workbook.onSelectionChanged.add(async () => {
+      const h = ctx.workbook.onSelectionChanged.add(async () => {
         refreshSelection();
       });
       await ctx.sync();
+      // cleanup can run before this resolves
+      if (dropped) remove(h);
+      else handler = h;
     }).catch(() => undefined);
+
     return () => {
-      if (handler) Excel.run(handler.context, async (ctx) => {
-        handler.remove();
-        await ctx.sync();
-      }).catch(() => undefined);
+      dropped = true;
+      if (handler) remove(handler);
     };
   }, [refreshSelection]);
 
@@ -124,7 +133,7 @@ export default function App() {
       askResolver.current = (answer) => {
         setAsk(null);
         askResolver.current = null;
-        push({ id: newId(), role: "user", content: answer });
+        push({ id: newId(), role: "user", content: answer, uiOnly: true });
         resolve(answer);
       };
     });
@@ -145,7 +154,7 @@ export default function App() {
     if (busy) return;
 
     const userMsg: Msg = { id: newId(), role: "user", content: trimmed };
-    const history = [...msgs.filter((m) => m.id !== "welcome"), userMsg];
+    const history = [...msgs.filter((m) => m.id !== "welcome" && !m.uiOnly), userMsg];
     push(userMsg);
     setBusy(true);
     abortRef.current = new AbortController();
