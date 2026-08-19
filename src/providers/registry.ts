@@ -4,9 +4,7 @@ export type ProviderId =
   | "openrouter"
   | "cerebras"
   | "mistral"
-  | "sambanova"
-  | "nvidia"
-  | "github"
+  | "huggingface"
   | "zai";
 export type ProviderKind = "openai" | "gemini";
 
@@ -79,38 +77,19 @@ export const PROVIDERS: Provider[] = [
     note: "Experiment plan, no card. ~1B tokens/month. Reliable tool calling.",
   },
   {
-    id: "sambanova",
-    label: "SambaNova",
+    id: "huggingface",
+    label: "Hugging Face",
     kind: "openai",
-    baseUrl: "https://api.sambanova.ai/v1",
-    keyUrl: "https://cloud.sambanova.ai/apis",
-    models: ["DeepSeek-V3.1", "Meta-Llama-3.3-70B-Instruct", "Llama-4-Maverick-17B-128E-Instruct"],
-    freeLimit: "20 req/min, 200K tokens/day, no card",
-    note: "No card. 20 RPM, 200K tokens/day. Fast big models.",
-  },
-  {
-    id: "nvidia",
-    label: "NVIDIA NIM",
-    kind: "openai",
-    baseUrl: "https://integrate.api.nvidia.com/v1",
-    keyUrl: "https://build.nvidia.com",
+    baseUrl: "https://router.huggingface.co/v1",
+    keyUrl: "https://huggingface.co/settings/tokens",
     models: [
-      "meta/llama-3.3-70b-instruct",
-      "deepseek-ai/deepseek-v3.1",
-      "qwen/qwen3-235b-a22b",
+      "deepseek-ai/DeepSeek-V4-Flash",
+      "Qwen/Qwen3.6-27B",
+      "openai/gpt-oss-20b",
+      "meta-llama/Llama-3.1-8B-Instruct",
     ],
-    freeLimit: "~40 req/min, free developer program",
-    note: "Free with the developer program, ~40 RPM. Wide model catalogue.",
-  },
-  {
-    id: "github",
-    label: "GitHub Models",
-    kind: "openai",
-    baseUrl: "https://models.github.ai/inference",
-    keyUrl: "https://github.com/settings/tokens",
-    models: ["openai/gpt-4o", "openai/gpt-4o-mini", "meta/Llama-3.3-70B-Instruct"],
-    freeLimit: "10 req/min, 50 req/day, key is a GitHub PAT",
-    note: "Key is a GitHub PAT with models:read. 10 RPM, 50 requests/day.",
+    freeLimit: "Monthly credit allowance, no card",
+    note: "Routes to many open models on one key. Refresh models lists what is live.",
   },
   {
     id: "zai",

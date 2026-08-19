@@ -22,9 +22,7 @@
     <AppDomain>https://openrouter.ai</AppDomain>
     <AppDomain>https://api.cerebras.ai</AppDomain>
     <AppDomain>https://api.mistral.ai</AppDomain>
-    <AppDomain>https://api.sambanova.ai</AppDomain>
-    <AppDomain>https://integrate.api.nvidia.com</AppDomain>
-    <AppDomain>https://models.github.ai</AppDomain>
+    <AppDomain>https://router.huggingface.co</AppDomain>
     <AppDomain>https://open.bigmodel.cn</AppDomain>
     <AppDomain>https://api.github.com</AppDomain>
   </AppDomains>

@@ -11,7 +11,11 @@ Works on Windows with desktop Office (Microsoft 365, or Office 2019 and later).
 2. Download `tANk-Setup.exe` from the latest release.
 3. Run it. Windows shows a blue warning first, see below. No administrator password is needed;
    it installs for you only.
-4. Open Excel. On the Home tab, at the right, click **tANk**.
+4. Open Excel. On the **Home** tab choose **Add-ins**, then pick **tANk** under Developer Add-ins.
+
+![The Add-ins menu on the Home tab, with tANk listed under Developer Add-ins](docs/where-to-find-tank.png)
+
+The pane opens on the right and stays open while you work, so this is a once-per-session step.
 
 ## Windows will warn you
 
@@ -83,8 +87,12 @@ and both are removed. It touches nothing else on the machine.
 
 ## If something goes wrong
 
-**No tANk button.** Office was open during the install. Close all Office apps and run the
-installer again.
+**tANk is not in the Add-ins list.** Office was open during the install. Close all Office apps
+and run the installer again.
+
+**There is no tANk button on the ribbon.** There isn't one. Office only puts add-in buttons on the
+ribbon for add-ins installed from the store or pushed out by a Microsoft 365 administrator, so
+tANk lives under Home > Add-ins instead.
 
 **The pane is blank.** Check your internet connection. The pane loads from the web.
 

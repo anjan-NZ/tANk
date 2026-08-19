@@ -4,12 +4,14 @@ An AI chat pane inside Excel, Word and PowerPoint. It reads the file you have op
 questions about it, and makes the changes you ask for. It runs on your own API key from any of
 nine free providers, so there is no subscription and no account to create.
 
-![tANk](public/assets/icon-128.png)
+![Where to find tANk in Excel: Home tab, Add-ins, then tANk under Developer Add-ins](docs/where-to-find-tank.png)
+
+Open it from **Home > Add-ins > tANk**. The pane opens on the right and stays there while you work.
 
 ## Install
 
 Download `tANk-Setup.exe` from [Releases](../../releases), close Office, run it. No administrator
-rights needed. Then open Excel and click **tANk** on the Home tab.
+rights needed. Then open Excel and choose **Home > Add-ins > tANk**.
 
 Full steps, including how to get a free key: [INSTALL.md](INSTALL.md)
 
