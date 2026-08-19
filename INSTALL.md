@@ -8,10 +8,18 @@ Works on Windows with desktop Office (Microsoft 365, or Office 2019 and later).
 ## Install
 
 1. Close Excel, Word and PowerPoint.
-2. Download `tANk-Setup.exe` from the latest release.
-3. Run it. Windows shows a blue warning first, see below. No administrator password is needed;
-   it installs for you only.
+2. Download `install.cmd` from the latest release.
+3. Double click it. No administrator password is needed; it installs for you only.
 4. Open Excel and click **tANk** at the right of the Home tab.
+
+`install.cmd` is the one to use. It copies a single file into your AppData and writes one
+registry value, using tools that already ship with Windows. There is no program to install and
+nothing runs from a temporary folder, so the security features that block unknown installers have
+nothing to object to.
+
+`tANk-Setup.exe` is also on the release page and does exactly the same three things through a
+normal setup wizard. Prefer it if you like a wizard, but see the warning below: on some machines
+Windows refuses to run it at all.
 
 ![The Add-ins menu on the Home tab, with tANk listed under Developer Add-ins](docs/where-to-find-tank.png)
 
@@ -19,25 +27,31 @@ If the button is not there yet, open **Add-ins** on the same tab and pick **tANk
 Developer Add-ins, as in the picture above. Office can take a restart or two after installing
 before it adds the button itself. The pane opens on the right and stays open while you work.
 
-## Windows will warn you
+## If Windows blocks the exe
 
-The first time you run the installer, Windows puts up a blue "Windows protected your PC" screen.
+Two different things can happen, and only one of them can be clicked past.
+
+**"Windows protected your PC", a blue box with More info and Run anyway.** That is SmartScreen.
 Click **More info**, then **Run anyway**.
 
-The warning is there because the installer is not code signed. Signing means buying a certificate
-and renewing it every year, and this is a free project, so it does not have one. Windows shows
-that screen for any unsigned program, so it tells you nothing about what is inside this one.
+**"Smart App Control blocked an app that may be unsafe", or "Error 4551: An Application Control
+policy has blocked this file".** That is Smart App Control, and there is no way past it. It refuses
+any program whose publisher it cannot verify, and it does not offer an override.
 
-If you would rather not run an unsigned exe, use the script instead. It downloads the manifest,
-writes the registry value and clears Office's add-in cache, which is everything the installer does.
+Both happen because the installer is not code signed. Signing means buying a certificate and
+renewing it every year, and this is a free project, so it does not have one. Neither message says
+anything about what is inside the file; Windows shows them for every unsigned program.
+
+Use `install.cmd` instead. Smart App Control has nothing to block there, because nothing is being
+installed as a program. There is also a PowerShell version if you prefer it:
 
 ```powershell
 irm https://anjan-NZ.github.io/tANk/install.ps1 -OutFile install.ps1
 powershell -ExecutionPolicy Bypass -File install.ps1
 ```
 
-To check that the exe is the one built from this repository, and not something swapped in later,
-verify the provenance GitHub records at build time:
+If you do use the exe and want to check it is the one built from this repository, rather than
+something swapped in later, verify the provenance GitHub records at build time:
 
 ```
 gh attestation verify tANk-Setup.exe --repo anjan-NZ/tANk
@@ -77,8 +91,8 @@ Nothing is logged anywhere.
 1. Open tANk, press **Settings**, then **Erase everything**. That clears your API keys and all
    settings immediately.
 2. Close Excel, Word and PowerPoint.
-3. Windows Settings, Apps, find tANk, Uninstall. Or run `uninstall.ps1` if you installed with the
-   script.
+3. Run `uninstall.cmd`. If you installed with the exe instead, use Windows Settings, Apps, find
+   tANk, Uninstall.
 
 Step 1 matters. The keys are held by the pane inside Office's own web storage, which an
 uninstaller cannot pick apart without wiping what every other add-in on the PC has saved, so it

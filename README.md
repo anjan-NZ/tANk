@@ -13,8 +13,11 @@ while you work.
 
 ## Install
 
-Download `tANk-Setup.exe` from [Releases](../../releases), close Office, run it. No administrator
-rights needed. Then open Excel and click **tANk** on the Home tab.
+Close Office, download `install.cmd` from [Releases](../../releases) and double click it. No
+administrator rights needed. Then open Excel and click **tANk** on the Home tab.
+
+There is a `tANk-Setup.exe` on the same page if you prefer a wizard, though Windows Smart App
+Control blocks unsigned installers outright on some machines. The .cmd is not affected.
 
 Full steps, including how to get a free key: [INSTALL.md](INSTALL.md)
 

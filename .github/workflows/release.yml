@@ -71,12 +71,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
+            dist/install.cmd
+            dist/uninstall.cmd
             release/tANk-Setup.exe
             dist/manifest.xml
           body: |
-            Close Excel, Word and PowerPoint, then run `tANk-Setup.exe`. No administrator rights needed.
+            Close Excel, Word and PowerPoint, download **install.cmd** and double click it. No administrator rights needed.
 
-            Windows puts up a blue "Windows protected your PC" screen because the installer is not code signed. Click **More info**, then **Run anyway**. To skip the exe, install with the script instead: `irm https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/install.ps1 -OutFile install.ps1` then `powershell -ExecutionPolicy Bypass -File install.ps1`.
+            `tANk-Setup.exe` is the same thing as a wizard, but Windows blocks unsigned installers on some machines. SmartScreen ("Windows protected your PC") can be clicked past with **More info** then **Run anyway**. Smart App Control ("blocked an app that may be unsafe", or "Error 4551") cannot: it refuses any publisher it cannot verify and offers no override. `install.cmd` avoids both, because nothing is installed as a program.
 
             To check the exe came from this repository: `gh attestation verify tANk-Setup.exe --repo ${{ github.repository }}`
 

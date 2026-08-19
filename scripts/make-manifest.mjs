@@ -16,10 +16,17 @@ if (out === src) console.warn("Nothing was replaced. Is the dev manifest still p
 mkdirSync("dist", { recursive: true });
 writeFileSync("dist/manifest.xml", out);
 
-// The installer is published next to the app so people can grab it with one command.
-const installer = readFileSync("scripts/install.ps1", "utf8").replace(/__BASE_URL__/g, base);
-writeFileSync("dist/install.ps1", installer);
-writeFileSync("dist/uninstall.ps1", readFileSync("scripts/uninstall.ps1", "utf8"));
+// The installers are published next to the app so people can grab them directly.
+// The .cmd pair is the one to point people at: no exe, so nothing for Smart App
+// Control to block. Written with CRLF because this runs on a Linux runner and a
+// Windows script host is fussy about line endings.
+const crlf = (s) => s.replace(/\r?\n/g, "\r\n");
+
+for (const name of ["install.ps1", "uninstall.ps1", "install.cmd", "uninstall.cmd"]) {
+  const body = readFileSync("scripts/" + name, "utf8").replace(/__BASE_URL__/g, base);
+  writeFileSync("dist/" + name, name.endsWith(".cmd") ? crlf(body) : body);
+}
 
 console.log("dist/manifest.xml   -> " + base + "/index.html");
+console.log("dist/install.cmd    -> downloads from " + base + "/manifest.xml");
 console.log("dist/install.ps1    -> downloads from " + base + "/manifest.xml");
