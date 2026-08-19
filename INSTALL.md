@@ -11,11 +11,13 @@ Works on Windows with desktop Office (Microsoft 365, or Office 2019 and later).
 2. Download `tANk-Setup.exe` from the latest release.
 3. Run it. Windows shows a blue warning first, see below. No administrator password is needed;
    it installs for you only.
-4. Open Excel. On the **Home** tab choose **Add-ins**, then pick **tANk** under Developer Add-ins.
+4. Open Excel and click **tANk** at the right of the Home tab.
 
 ![The Add-ins menu on the Home tab, with tANk listed under Developer Add-ins](docs/where-to-find-tank.png)
 
-The pane opens on the right and stays open while you work, so this is a once-per-session step.
+If the button is not there yet, open **Add-ins** on the same tab and pick **tANk** under
+Developer Add-ins, as in the picture above. Office can take a restart or two after installing
+before it adds the button itself. The pane opens on the right and stays open while you work.
 
 ## Windows will warn you
 
@@ -90,14 +92,14 @@ and both are removed. It touches nothing else on the machine.
 **tANk is not in the Add-ins list.** Office was open during the install. Close all Office apps
 and run the installer again.
 
-**There is no tANk button on the ribbon.** There isn't one. Office only puts add-in buttons on the
-ribbon for add-ins installed from the store or pushed out by a Microsoft 365 administrator, so
-tANk lives under Home > Add-ins instead.
+**No tANk button on the ribbon yet.** Office adds it when it next rebuilds the ribbon, which can
+take a restart or two. Until then, Home > Add-ins > tANk opens the same pane.
 
 **The pane is blank.** Check your internet connection. The pane loads from the web.
 
-**"has run out for now".** That provider hit its per minute limit. Add a second key in Settings
-and tANk will switch by itself.
+**Answers pause, then carry on.** A provider hit its per minute limit and tANk moved to another
+model by itself. It does not interrupt to say so; the transcript shows a "Show model switches"
+link if you want to see what it did. Adding a second key gives it somewhere to go.
 
 **A model stops working.** Open Settings and press Refresh models. Providers retire models often.
 

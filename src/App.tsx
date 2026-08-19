@@ -352,6 +352,8 @@ export default function App() {
             onToggleDetails={() =>
               setSettings({ ...settings, showToolDetails: !settings.showToolDetails })
             }
+            showNotices={settings.showNotices}
+            onToggleNotices={() => setSettings({ ...settings, showNotices: !settings.showNotices })}
           />
 
           <div className="modes">

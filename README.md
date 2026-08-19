@@ -6,12 +6,15 @@ nine free providers, so there is no subscription and no account to create.
 
 ![Where to find tANk in Excel: Home tab, Add-ins, then tANk under Developer Add-ins](docs/where-to-find-tank.png)
 
-Open it from **Home > Add-ins > tANk**. The pane opens on the right and stays there while you work.
+The **tANk** button sits at the right of the Home tab. Office sometimes takes a restart or two
+after installing before it adds the button, so until it shows up, open the pane from
+**Home > Add-ins > tANk** instead. Either way the pane opens on the right and stays there
+while you work.
 
 ## Install
 
 Download `tANk-Setup.exe` from [Releases](../../releases), close Office, run it. No administrator
-rights needed. Then open Excel and choose **Home > Add-ins > tANk**.
+rights needed. Then open Excel and click **tANk** on the Home tab.
 
 Full steps, including how to get a free key: [INSTALL.md](INSTALL.md)
 

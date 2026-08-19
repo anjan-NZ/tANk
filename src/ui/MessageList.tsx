@@ -37,11 +37,15 @@ export default function MessageList({
   status,
   showDetails,
   onToggleDetails,
+  showNotices,
+  onToggleNotices,
 }: {
   msgs: Msg[];
   status: string | null;
   showDetails: boolean;
   onToggleDetails: () => void;
+  showNotices: boolean;
+  onToggleNotices: () => void;
 }) {
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -49,11 +53,14 @@ export default function MessageList({
   }, [msgs.length, status, showDetails]);
 
   const hiddenSteps = showDetails ? 0 : msgs.filter((m) => m.role === "tool").length;
+  const hiddenNotices = showNotices ? 0 : msgs.filter((m) => m.notice).length;
 
   return (
     <div className="thread" role="log" aria-live="polite" aria-label="Conversation">
       {msgs.map((m) => {
         if (m.role === "tool") return showDetails ? <ToolRow key={m.id} m={m} /> : null;
+
+        if (m.notice && !showNotices) return null;
 
         if (m.role === "user")
           return (
@@ -66,7 +73,10 @@ export default function MessageList({
         if (!showDetails && !m.content) return null;
 
         return (
-          <div key={m.id} className={"said tank" + (m.error ? " bad" : "")}>
+          <div
+            key={m.id}
+            className={"said tank" + (m.error ? " bad" : "") + (m.notice ? " aside" : "")}
+          >
             {m.content && <p className="text">{m.content}</p>}
             {showDetails &&
               m.toolCalls?.map((c) => <CallRow key={c.id} name={c.name} args={c.args} />)}
@@ -79,6 +89,16 @@ export default function MessageList({
           <span className="pulse" aria-hidden="true" />
           {status}…
         </p>
+      )}
+
+      {(hiddenNotices > 0 || showNotices) && (
+        <button type="button" className="linky" onClick={onToggleNotices}>
+          {showNotices
+            ? "Hide the model switches"
+            : "Show " +
+              hiddenNotices +
+              (hiddenNotices === 1 ? " model switch" : " model switches")}
+        </button>
       )}
 
       {(hiddenSteps > 0 || showDetails) && (

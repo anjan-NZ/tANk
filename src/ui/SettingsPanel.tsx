@@ -114,10 +114,16 @@ export default function SettingsPanel({
         <label className="field">
           <span>API key for {provider.label}</span>
           <input
-            type="password"
-            name="apikey"
+            type="text"
+            className="secret"
+            name="tank-provider-token"
             autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
             spellCheck={false}
+            data-lpignore="true"
+            data-1p-ignore=""
+            data-form-type="other"
             placeholder={"paste your " + provider.label + " key…"}
             value={settings.keys[settings.provider] ?? ""}
             onChange={(e) =>

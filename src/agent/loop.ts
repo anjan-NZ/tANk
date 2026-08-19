@@ -98,6 +98,7 @@ export async function runTurn(history: Msg[], deps: TurnDeps): Promise<void> {
           deps.push({
             id: newId(),
             role: "assistant",
+            notice: true,
             content:
               getProvider(active.provider).label +
               " is out of room for the moment" +
@@ -173,6 +174,7 @@ export async function runTurn(history: Msg[], deps: TurnDeps): Promise<void> {
             deps.push({
               id: newId(),
               role: "assistant",
+              notice: true,
               content: failureLine(err) + " Carrying on with " + spare.label + ".",
             });
             continue;
@@ -235,7 +237,12 @@ export async function runTurn(history: Msg[], deps: TurnDeps): Promise<void> {
         active = { provider: chosen.provider, model: chosen.model };
         switches++;
         deps.onSwitch(active.provider, active.model);
-        deps.push({ id: newId(), role: "assistant", content: "Switched to " + chosen.label + "." });
+        deps.push({
+          id: newId(),
+          role: "assistant",
+          notice: true,
+          content: "Switched to " + chosen.label + ".",
+        });
       }
     }
   }

@@ -1,5 +1,5 @@
 // Pane polish, not protection: the source is public and a webview can always be inspected
-// from outside the page. The context menu stays live in inputs and over selected text.
+// from outside the page. Inputs keep their own menu so paste still works.
 
 const DEVTOOLS_KEYS = new Set(["I", "J", "C"]);
 
@@ -12,7 +12,6 @@ function editable(target: EventTarget | null): boolean {
 export function lockDown(): void {
   document.addEventListener("contextmenu", (e) => {
     if (editable(e.target)) return;
-    if (!window.getSelection()?.isCollapsed) return;
     e.preventDefault();
   });
 

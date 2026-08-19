@@ -27,6 +27,8 @@ export interface Settings {
   autoCheckUpdates: boolean;
   /** show the tool calls and their raw results in the transcript */
   showToolDetails: boolean;
+  /** show the model switching chatter (rate limits, rotations) in the transcript */
+  showNotices: boolean;
 }
 
 const DEFAULTS: Settings = {
@@ -44,6 +46,7 @@ const DEFAULTS: Settings = {
   leanTools: false,
   autoCheckUpdates: true,
   showToolDetails: false,
+  showNotices: false,
 };
 
 /**

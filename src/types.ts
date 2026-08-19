@@ -18,6 +18,8 @@ export interface Msg {
   status?: string;
   /** shown in the transcript, never replayed to the model */
   uiOnly?: boolean;
+  /** routing chatter: which model was swapped in and why. Hidden unless asked for. */
+  notice?: boolean;
   error?: boolean;
 }
 
