@@ -9,8 +9,33 @@ Works on Windows with desktop Office (Microsoft 365, or Office 2019 and later).
 
 1. Close Excel, Word and PowerPoint.
 2. Download `tANk-Setup.exe` from the latest release.
-3. Run it. No administrator password is needed; it installs for you only.
+3. Run it. Windows shows a blue warning first, see below. No administrator password is needed;
+   it installs for you only.
 4. Open Excel. On the Home tab, at the right, click **tANk**.
+
+## Windows will warn you
+
+The first time you run the installer, Windows puts up a blue "Windows protected your PC" screen.
+Click **More info**, then **Run anyway**.
+
+The warning is there because the installer is not code signed. Signing means buying a certificate
+and renewing it every year, and this is a free project, so it does not have one. Windows shows
+that screen for any unsigned program, so it tells you nothing about what is inside this one.
+
+If you would rather not run an unsigned exe, use the script instead. It downloads the manifest,
+writes the registry value and clears Office's add-in cache, which is everything the installer does.
+
+```powershell
+irm https://anjan-NZ.github.io/tANk/install.ps1 -OutFile install.ps1
+powershell -ExecutionPolicy Bypass -File install.ps1
+```
+
+To check that the exe is the one built from this repository, and not something swapped in later,
+verify the provenance GitHub records at build time:
+
+```
+gh attestation verify tANk-Setup.exe --repo anjan-NZ/tANk
+```
 
 ## First run
 

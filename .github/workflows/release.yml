@@ -32,8 +32,19 @@ jobs:
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y
 
+      # Both defines have defaults in tank.iss, so leaving them out fails quietly: the finish
+      # page link goes to github.com/blob/main/INSTALL.md and every build calls itself 1.0.0.
       - name: Compile the installer
-        run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\tank.iss'
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          if ("${{ github.ref_type }}" -ne "tag") {
+            $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          }
+          Write-Host "Building installer $version"
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+            "/DAppVersion=$version" `
+            "/DSupportUrl=https://github.com/${{ github.repository }}" `
+            installer\tank.iss
 
       # Signing only runs when a certificate is configured, so forks and early
       # releases still build. Unsigned means Windows shows a SmartScreen warning.
@@ -64,6 +75,10 @@ jobs:
             dist/manifest.xml
           body: |
             Close Excel, Word and PowerPoint, then run `tANk-Setup.exe`. No administrator rights needed.
+
+            Windows puts up a blue "Windows protected your PC" screen because the installer is not code signed. Click **More info**, then **Run anyway**. To skip the exe, install with the script instead: `irm https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/install.ps1 -OutFile install.ps1` then `powershell -ExecutionPolicy Bypass -File install.ps1`.
+
+            To check the exe came from this repository: `gh attestation verify tANk-Setup.exe --repo ${{ github.repository }}`
 
             Open Excel and click **tANk** on the Home tab. First time, open Settings in the pane and paste a free API key.
 

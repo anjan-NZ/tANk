@@ -23,8 +23,10 @@ AppSupportURL={#SupportUrl}
 DefaultDirName={localappdata}\{#AppName}
 DisableDirPage=yes
 DisableProgramGroupPage=yes
+; Per user, with no way to ask for anything more. An elevated install would write the
+; registration into the administrator's HKCU instead of the user's, so the ribbon button
+; would simply never appear for the person who installed it.
 PrivilegesRequired=lowest
-PrivilegesRequiredOverridesAllowed=dialog
 OutputDir=..\release
 OutputBaseFilename=tANk-Setup
 SetupIconFile=..\public\assets\icon-128.ico
