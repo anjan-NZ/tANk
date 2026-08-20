@@ -34,7 +34,7 @@ export default function App() {
   // resolved, and a lost race left the pane believing it was not inside Office at all:
   // no selection, no scope, and the model working blind on a spreadsheet.
   const [host] = useState(detectHost);
-  const inExcel = () => host === "excel";
+  const inExcel = host === "excel";
 
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [msgs, setMsgs] = useState<Msg[]>(() => [
@@ -80,7 +80,7 @@ export default function App() {
   }, [settings.theme]);
 
   const refreshSelection = useCallback(async () => {
-    if (!inExcel()) return;
+    if (!inExcel) return;
     try {
       const sel = await readSelection();
       selRef.current = sel;
@@ -91,10 +91,10 @@ export default function App() {
     } catch {
       /* selection can be unavailable mid-edit; ignore */
     }
-  }, [pinned]);
+  }, [pinned, inExcel]);
 
   useEffect(() => {
-    if (!inExcel()) return;
+    if (!inExcel) return;
     refreshSelection();
     let handler: any = null;
     let dropped = false;
@@ -118,7 +118,7 @@ export default function App() {
       dropped = true;
       if (handler) remove(handler);
     };
-  }, [refreshSelection]);
+  }, [refreshSelection, inExcel]);
 
   const confirmEdit = useCallback(async (summary: string): Promise<boolean> => {
     const answer = await askUserRef.current(summary, ["Yes, change it", "No, leave it"]);
@@ -159,7 +159,7 @@ export default function App() {
     abortRef.current = new AbortController();
 
     try {
-      if (inExcel()) {
+      if (inExcel) {
         try {
           selRef.current = await readSelection();
         } catch {
@@ -167,7 +167,7 @@ export default function App() {
         }
       }
 
-      if (inExcel() && !pinned) {
+      if (inExcel && !pinned) {
         const p = await proposeScope();
         if (p.scope) {
           setScope(p.scope);
@@ -244,7 +244,7 @@ export default function App() {
     });
   }
 
-  const address = inExcel()
+  const address = inExcel
     ? scope
       ? scope.label
       : selLabel || "nothing selected"
@@ -309,11 +309,11 @@ export default function App() {
 
       <div className="context">
         <span className={"ctxdot" + (pinned ? " pinned" : "")} aria-hidden="true" />
-        <span className="ctxlabel">{inExcel() ? (pinned ? "Pinned" : "Working on") : "Open in"}</span>
+        <span className="ctxlabel">{inExcel ? (pinned ? "Pinned" : "Working on") : "Open in"}</span>
         <code className="addr" title={address}>
           {address}
         </code>
-        {inExcel() && (
+        {inExcel && (
           <button
             type="button"
             className="ghost"
