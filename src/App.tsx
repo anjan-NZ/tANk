@@ -212,6 +212,16 @@ export default function App() {
         setStatus,
         onSwitch: (provider, model) =>
           setSettings((prev) => ({ ...prev, provider, model })),
+        onModels: (provider, models) =>
+          setSettings((prev) => ({
+            ...prev,
+            modelCache: { ...prev.modelCache, [provider]: models },
+            // A chain entry pointing at something the provider retired is only a
+            // detour through a guaranteed failure.
+            fallbacks: prev.fallbacks.filter(
+              (f) => f.provider !== provider || models.includes(f.model)
+            ),
+          })),
         onPromptMode: (provider, model) =>
           setSettings((prev) =>
             prev.promptToolModels.includes(provider + "|" + model)

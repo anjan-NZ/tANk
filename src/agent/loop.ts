@@ -40,6 +40,8 @@ export interface TurnDeps {
   onSwitch: (provider: ProviderId, model: string) => void;
   /** remember that this model needs the prompt-based tool protocol */
   onPromptMode: (provider: ProviderId, model: string) => void;
+  /** a provider just told us what it actually has; worth keeping */
+  onModels: (provider: ProviderId, models: string[]) => void;
   signal?: AbortSignal;
 }
 
@@ -181,6 +183,9 @@ export async function runTurn(history: Msg[], deps: TurnDeps): Promise<void> {
           const live = await fetchModels(provider, settings.keys[active.provider] ?? "").catch(
             () => [] as string[]
           );
+          // Keep it. The rotation builds its candidates from this, so a stale list is
+          // what kept offering retired ids over and over.
+          if (live.length) deps.onModels(active.provider, live);
           const replacement = autoPick(
             provider.models,
             live,
