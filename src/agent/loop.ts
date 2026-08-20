@@ -76,6 +76,7 @@ export async function runTurn(history: Msg[], deps: TurnDeps): Promise<void> {
   let switches = 0;
   let waits = 0;
   const deadModels = new Set<string>();
+  let unproven: { provider: ProviderId; model: string } | null = null;
   const relists = new Map<ProviderId, number>();
   const promptModels = new Set(settings.promptToolModels);
   const isPromptMode = () => promptModels.has(active.provider + "|" + active.model);
@@ -138,6 +139,13 @@ export async function runTurn(history: Msg[], deps: TurnDeps): Promise<void> {
 
         noteSuccess(idOf(active.provider, active.model), res.rate, res.usage?.totalTokens);
 
+        // Only now is a healed model worth remembering. Saving it at the moment of the
+        // switch wrote a broken id into the user's settings and made it the default.
+        if (unproven && unproven.provider === active.provider && unproven.model === active.model) {
+          deps.onSwitch(unproven.provider, unproven.model);
+          unproven = null;
+        }
+
         // In prompt mode the call arrives as JSON inside the text.
         if (prompted && !res.toolCalls.length) {
           const { call, prose } = parsePromptedCall(res.content);
@@ -192,7 +200,7 @@ export async function runTurn(history: Msg[], deps: TurnDeps): Promise<void> {
                 " instead.",
             });
             active = { provider: active.provider, model: replacement };
-            deps.onSwitch(active.provider, replacement);
+            unproven = { provider: active.provider, model: replacement };
             continue;
           }
         }

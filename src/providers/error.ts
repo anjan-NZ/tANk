@@ -48,7 +48,11 @@ export function redact(text: string, apiKey: string): string {
 }
 
 export function classify(status: number, body: string): FailureKind {
-  // Checked first: a 400 about tools means "retry me without tools", not "give up".
+  // Before the tools check: this one names the model, so no amount of retrying without
+  // tools will help. Gemini says it about previews that are not open for general use.
+  if (/not enabled for models\/|is not supported for|multiturn/i.test(body)) return "model";
+
+  // A 400 about tools means "retry me without tools", not "give up".
   if (
     (status === 400 || status === 422 || status === 404) &&
     /tool|function[_ ]?call|tool_choice/i.test(body) &&
