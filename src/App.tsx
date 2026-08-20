@@ -13,9 +13,6 @@ import UsagePanel from "./ui/UsagePanel";
 import MessageList from "./ui/MessageList";
 import Composer from "./ui/Composer";
 
-const HOST = detectHost();
-const inExcel = () => HOST === "excel";
-
 const WELCOME_BY_HOST: Record<string, string> = {
   excel:
     "Pick some cells and ask, or just ask and I will work out where to look.\n" +
@@ -32,15 +29,17 @@ const WELCOME_BY_HOST: Record<string, string> = {
   none: "Open me from inside Excel, Word or PowerPoint and I can work on the open file.",
 };
 
-const WELCOME: Msg = {
-  id: "welcome",
-  role: "assistant",
-  content: WELCOME_BY_HOST[HOST],
-};
-
 export default function App() {
+  // Read once the component mounts. At module scope this ran before Office.onReady
+  // resolved, and a lost race left the pane believing it was not inside Office at all:
+  // no selection, no scope, and the model working blind on a spreadsheet.
+  const [host] = useState(detectHost);
+  const inExcel = () => host === "excel";
+
   const [settings, setSettings] = useState<Settings>(loadSettings);
-  const [msgs, setMsgs] = useState<Msg[]>([WELCOME]);
+  const [msgs, setMsgs] = useState<Msg[]>(() => [
+    { id: "welcome", role: "assistant", content: WELCOME_BY_HOST[host] },
+  ]);
   const [scope, setScope] = useState<Scope | null>(null);
   const [pinned, setPinned] = useState(false);
   const [selLabel, setSelLabel] = useState<string>("");
@@ -249,7 +248,7 @@ export default function App() {
     ? scope
       ? scope.label
       : selLabel || "nothing selected"
-    : HOST_LABEL[HOST] + " document";
+    : HOST_LABEL[host] + " document";
 
   return (
     <div className="app">

@@ -19,6 +19,7 @@ import {
 import { toolsFor, execTool } from "./tools";
 import { buildSystemPrompt } from "./systemPrompt";
 import { flattenForPromptMode, parsePromptedCall, toolCatalogPrompt } from "./promptTools";
+import { fetchModels } from "../providers/models";
 
 const MAX_STEPS = 12;
 const OLD_TOOL_RESULT_CHARS = 600;
@@ -73,6 +74,7 @@ export async function runTurn(history: Msg[], deps: TurnDeps): Promise<void> {
   let active = { provider: settings.provider, model: settings.model };
   let switches = 0;
   let waits = 0;
+  const relisted = new Set<ProviderId>();
   const promptModels = new Set(settings.promptToolModels);
   const isPromptMode = () => promptModels.has(active.provider + "|" + active.model);
 
@@ -155,6 +157,34 @@ export async function runTurn(history: Msg[], deps: TurnDeps): Promise<void> {
           });
           continue;
         }
+        // A retired model id is not a reason to abandon a provider that still works.
+        // Ask it what it has now and carry on with that.
+        if (err instanceof ProviderError && err.kind === "model" && !relisted.has(active.provider)) {
+          relisted.add(active.provider);
+          const live = await fetchModels(
+            getProvider(active.provider),
+            settings.keys[active.provider] ?? ""
+          ).catch(() => [] as string[]);
+          const replacement = live.find((m) => m !== active.model);
+          if (replacement) {
+            deps.push({
+              id: newId(),
+              role: "assistant",
+              notice: true,
+              content:
+                getProvider(active.provider).label +
+                " no longer offers " +
+                active.model +
+                ", using " +
+                replacement +
+                " instead.",
+            });
+            active = { provider: active.provider, model: replacement };
+            deps.onSwitch(active.provider, replacement);
+            continue;
+          }
+        }
+
         if (!(err instanceof ProviderError) || !err.switchable) throw err;
 
         const failedId = idOf(active.provider, active.model);

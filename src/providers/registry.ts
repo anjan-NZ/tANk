@@ -49,9 +49,9 @@ export const PROVIDERS: Provider[] = [
     baseUrl: "https://openrouter.ai/api/v1",
     keyUrl: "https://openrouter.ai/keys",
     models: [
-      "deepseek/deepseek-chat-v3.1:free",
-      "qwen/qwen3-235b-a22b:free",
-      "meta-llama/llama-3.3-70b-instruct:free",
+      "openai/gpt-oss-20b:free",
+      "nvidia/nemotron-3-super-120b-a12b:free",
+      "google/gemma-4-31b-it:free",
     ],
     freeLimit: "20 req/min, 50 req/day on :free models",
     note: "Router over many models; :free variants are rate limited.",
