@@ -58,7 +58,13 @@ export function classify(status: number, body: string): FailureKind {
   if (status === 429) return "rate_limit";
   if (status === 401 || status === 403) return "auth";
   if (status === 402) return "rate_limit"; // credits exhausted behaves like a quota wall
-  if (status === 404 || /model_not_found|does not exist|decommissioned/i.test(body)) return "model";
+  if (
+    status === 404 ||
+    /model_not_found|does not exist|decommissioned|multiturn|not enabled for|not supported for/i.test(
+      body
+    )
+  )
+    return "model";
   if (status >= 500) return "server";
   if (/rate limit|quota|exhausted|resource_exhausted/i.test(body)) return "rate_limit";
   return "other";

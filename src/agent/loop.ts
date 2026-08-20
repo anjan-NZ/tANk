@@ -19,12 +19,13 @@ import {
 import { toolsFor, execTool } from "./tools";
 import { buildSystemPrompt } from "./systemPrompt";
 import { flattenForPromptMode, parsePromptedCall, toolCatalogPrompt } from "./promptTools";
-import { fetchModels } from "../providers/models";
+import { autoPick, fetchModels } from "../providers/models";
 
 const MAX_STEPS = 12;
 const OLD_TOOL_RESULT_CHARS = 600;
 const MAX_SWITCHES = 4;
 const MAX_WAITS = 3;
+const MAX_RELISTS = 2;
 
 export interface TurnDeps {
   settings: Settings;
@@ -74,7 +75,8 @@ export async function runTurn(history: Msg[], deps: TurnDeps): Promise<void> {
   let active = { provider: settings.provider, model: settings.model };
   let switches = 0;
   let waits = 0;
-  const relisted = new Set<ProviderId>();
+  const deadModels = new Set<string>();
+  const relists = new Map<ProviderId, number>();
   const promptModels = new Set(settings.promptToolModels);
   const isPromptMode = () => promptModels.has(active.provider + "|" + active.model);
 
@@ -158,14 +160,24 @@ export async function runTurn(history: Msg[], deps: TurnDeps): Promise<void> {
           continue;
         }
         // A retired model id is not a reason to abandon a provider that still works.
-        // Ask it what it has now and carry on with that.
-        if (err instanceof ProviderError && err.kind === "model" && !relisted.has(active.provider)) {
-          relisted.add(active.provider);
-          const live = await fetchModels(
-            getProvider(active.provider),
-            settings.keys[active.provider] ?? ""
-          ).catch(() => [] as string[]);
-          const replacement = live.find((m) => m !== active.model);
+        // Ask it what it has now and carry on with that. Capped, because a provider can
+        // list several ids that each turn out to refuse the job.
+        if (
+          err instanceof ProviderError &&
+          err.kind === "model" &&
+          (relists.get(active.provider) ?? 0) < MAX_RELISTS
+        ) {
+          relists.set(active.provider, (relists.get(active.provider) ?? 0) + 1);
+          deadModels.add(idOf(active.provider, active.model));
+          const provider = getProvider(active.provider);
+          const live = await fetchModels(provider, settings.keys[active.provider] ?? "").catch(
+            () => [] as string[]
+          );
+          const replacement = autoPick(
+            provider.models,
+            live,
+            new Set(live.filter((m) => deadModels.has(idOf(active.provider, m))))
+          );
           if (replacement) {
             deps.push({
               id: newId(),
@@ -173,7 +185,7 @@ export async function runTurn(history: Msg[], deps: TurnDeps): Promise<void> {
               notice: true,
               content:
                 getProvider(active.provider).label +
-                " no longer offers " +
+                " cannot use " +
                 active.model +
                 ", using " +
                 replacement +
